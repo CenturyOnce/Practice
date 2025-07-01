@@ -72,9 +72,11 @@ public class TicTacToe{
                 if(winCheck(matrix, player)){
                     System.out.println("Победил игрок " + player + "!");
                     replay = askReplay(replay);
+                    break;
                 } else if(turn == 9){
                     System.out.println("Ничья!");
                     replay = askReplay(replay);
+                    break;
                 }
                 
             }
