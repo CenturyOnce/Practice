@@ -1,9 +1,39 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Scanner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Film.class, name = "film"),
+        @JsonSubTypes.Type(value = Book.class, name = "book")
+})
+
+class MediaLibrary {
+    private ArrayList<Book> books;
+    private ArrayList<Film> films;
+
+    // Конструктор, геттеры и сеттеры
+    public MediaLibrary(ArrayList<Book> books, ArrayList<Film> films) {
+        this.books = books;
+        this.films = films;
+    }
+}
+
 abstract class Media{
-    protected String type;
     protected String name;
     protected ArrayList<String> genres;
     protected int pubYear;
@@ -90,7 +120,6 @@ class Book extends Media{
 
     public Book(int id, String name, String author, ArrayList<String> genres, int pubYear, String publisher, int amountOfPages, double rating){
         super(name, genres, pubYear, rating);
-        type = "Книга";
         this.id = id;
         this.author = author;
         this.publisher = publisher;
@@ -145,7 +174,6 @@ class Film extends Media{
 
     public Film(int id, String name, ArrayList<String> genres, int pubYear, ArrayList<String> creators, int durationMinutes, double rating){
         super(name, genres, pubYear, rating);
-        type = "Фильм";
         this.id = id;
         this.creators = creators;
         this.durationMinutes = durationMinutes;
@@ -452,6 +480,9 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+
         Scanner scanner = new Scanner(System.in);
 
         ArrayList<Book> books = new ArrayList<>();
@@ -462,9 +493,24 @@ public class Main {
                 2019, new ArrayList<>(Arrays.asList("Нэйтан Блэк", "Брайс Папенбрук")),153, 4.2));
         films.add(new Film(films.size(), "На другой стороне", new ArrayList<>(Arrays.asList("Приключения", "Хоррор", "Экшен")),
                 2021, new ArrayList<>(Arrays.asList("Кристи Голд", "Майкл Ковак")),210, 3.7));
+
         int option = 0;
 
         while(option != 7) {
+            try {
+                String json = mapper.writeValueAsString(Map.of("books", books, "films", films));
+                Files.write(Paths.get("media_library.json"), json.getBytes());
+
+                System.out.println("Данные успешно записаны!");
+
+            } catch (IOException e) {
+                System.err.println("Ошибка при записи файла: " + e.getMessage());
+                e.printStackTrace();
+            } catch (Exception e) {
+                System.err.println("Неожиданная ошибка: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
             showMenu();
             option = scanner.nextInt();
             switch (option){
