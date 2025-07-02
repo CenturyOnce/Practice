@@ -1,0 +1,10 @@
+{
+  "name" : "Test",
+  "genres" : "test1, test2",
+  "rating" : 0.0,
+  "id" : 1,
+  "author" : "textAuthor",
+  "publisher" : "testPublisher",
+  "pages" : 100,
+  "year" : 2000
+}

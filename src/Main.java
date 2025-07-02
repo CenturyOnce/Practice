@@ -1,37 +1,9 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Scanner;
+import java.io.File;
+import java.util.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type"
-)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = Film.class, name = "film"),
-        @JsonSubTypes.Type(value = Book.class, name = "book")
-})
-
-class MediaLibrary {
-    private ArrayList<Book> books;
-    private ArrayList<Film> films;
-
-    // Конструктор, геттеры и сеттеры
-    public MediaLibrary(ArrayList<Book> books, ArrayList<Film> films) {
-        this.books = books;
-        this.films = films;
-    }
-}
 
 abstract class Media{
     protected String name;
@@ -39,6 +11,7 @@ abstract class Media{
     protected int pubYear;
     protected double rating;
 
+    public Media(){}
     public Media(String name, ArrayList<String> genres, int pubYear, double rating){
         this.name = name;
         this.genres = genres;
@@ -113,11 +86,12 @@ abstract class Media{
 }
 
 class Book extends Media{
-    private final int id;
+    private int id;
     private String author;
     private String publisher;
     private int amountOfPages;
 
+    public Book(){}
     public Book(int id, String name, String author, ArrayList<String> genres, int pubYear, String publisher, int amountOfPages, double rating){
         super(name, genres, pubYear, rating);
         this.id = id;
@@ -127,29 +101,34 @@ class Book extends Media{
     }
 
     public void getInfo(){
-        System.out.println("Тип: Книга" + "\nId: "+id);
+        System.out.println("Тип: Книга" + "\nId: " + getId());
         getMainInfo();
         System.out.println("Автор: " + author + "\nИздательство: " + publisher + "\nКол-во страниц: " + amountOfPages);
     }
 
+    public int getId(){
+        return id;
+    } public void updateId(ArrayList<Book> books){
+        id = books.size() - 1;
+    }
     public void getIdName(){
         System.out.println(id + " - " + getName());
     }
 
-    public void getAuthor(){
-        System.out.println(id + " - " + author);
+    public String getAuthor(){
+        return author;
     } public void changeAuthor(String author){
         this.author = author;
     }
 
-    public void getPublisher(){
-        System.out.println(id + " - " + getName() + " - " + publisher);
+    public String getPublisher(){
+        return publisher;
     } public void changePublisher(String publisher){
         this.publisher = publisher;
     }
 
-    public void getPages(){
-        System.out.println(id + " - " + getName() + " - " + amountOfPages);
+    public int getPages(){
+        return amountOfPages;
     } public void changePages(int amountOfPages){
         this.amountOfPages = amountOfPages;
     }
@@ -168,10 +147,11 @@ class Book extends Media{
 }
 
 class Film extends Media{
-    private final int id;
+    private int id;
     private ArrayList<String> creators;
     private int durationMinutes;
 
+    public Film(){}
     public Film(int id, String name, ArrayList<String> genres, int pubYear, ArrayList<String> creators, int durationMinutes, double rating){
         super(name, genres, pubYear, rating);
         this.id = id;
@@ -180,11 +160,16 @@ class Film extends Media{
     }
 
     public void getInfo(){
-        System.out.println("Тип: Фильм" + "\nId: ");
+        System.out.println("Тип: Фильм" + "\nId: " + getId());
         getMainInfo();
         System.out.println("Создатели: " + creators + "\nПродолжительность(в минутах): " + durationMinutes);
     }
 
+    public int getId(){
+        return id;
+    } public void updateId(ArrayList<Film> films){
+        id = films.size() - 1;
+    }
     public void getIdName(){
         System.out.println(id + " - " + getName());
     }
@@ -197,8 +182,8 @@ class Film extends Media{
         System.out.println(id + " - " + getName() + " - " + getYear());
     }
 
-    public void getDuration(){
-        System.out.println(id + " - " + getName() + " - " + durationMinutes);
+    public int getDuration(){
+        return durationMinutes;
     } public void changeDuration(int durationMinutes){
         this.durationMinutes = durationMinutes;
     }
@@ -207,8 +192,8 @@ class Film extends Media{
         System.out.println(id + " - " + getName() + " - " + getRating());
     }
 
-    public void getIdCreators(){
-        System.out.println(id + " - " + getName() + " - " + creators);
+    public ArrayList<String> getCreators(){
+        return creators;
     } public void changeCreators(){
         Scanner scanner = new Scanner(System.in);
         int opt = 0;
@@ -290,7 +275,6 @@ public class Main {
 
         books.add(new Book(id, name, author, genres, pubYear, publisher, amountOfPages, rating));
     }
-
     public static void addFilm(ArrayList<Film> films){
         int id = films.size();
         Scanner scanner = new Scanner(System.in);
@@ -326,13 +310,36 @@ public class Main {
 
     public static void showMenu(){
         System.out.println("Вы находитесь в медиатеке. Что вы хотите сделать?" +
-                "\n1 - Получить информацию о всех книгах" +
-                "\n2 - Получить информацию о всех фильмах" +
-                "\n3 - Добавить книгу" +
-                "\n4 - Добавить Фильм" +
-                "\n5 - Изменить информацию о книге" +
-                "\n6 - Изменить информацию о фильме" +
+                "\n1 - Получить информацию о всех книгах/фильмах" +
+                "\n2 - Добавить книгу/фильм" +
+                "\n3 - Изменить информацию о книге/фильме" +
+                "\n4 - Удалить книгу/фильм" +
+                "\n5 - Обновить файл JSON" +
+                "\n6 - Считать информацию с файла" +
                 "\n7 - Выход");
+    }
+    public static int mediaChoice(int choice){
+        Scanner scanner = new Scanner(System.in);
+        while(choice < 0 || choice >2){
+            System.out.println("С чем вы хотите выполнить действие?" +
+                    "\n1 - Книга" +
+                    "\n2 - Фильм");
+            choice = scanner.nextInt();
+        }
+        return choice;
+    }
+
+    public static int printBooks(ArrayList<Book> books, String question, int id){
+        Scanner scanner = new Scanner(System.in);
+        System.out.println(question);
+        for(Book book : books) book.getIdName();
+        return id = scanner.nextInt();
+    }
+    public static int printFilms(ArrayList<Film> films, String question, int id){
+        Scanner scanner = new Scanner(System.in);
+        System.out.println(question);
+        for(Film film : films) film.getIdName();
+        return id = scanner.nextInt();
     }
 
     public static void changeBookMenu(ArrayList<Book> books){
@@ -349,9 +356,7 @@ public class Main {
         int id = -1;
         if(opt == 1){
             while(id < 0 || id > books.size()){
-                System.out.println("Название какой книги вы хотите изменить?");
-                for(Book book : books)  book.getIdName();
-                id = scanner.nextInt();
+                id = printBooks(books, "Название какой книги вы хотите изменить?", id);
             }
             System.out.println("Напишите новое название книги: ");
             scanner.nextLine();
@@ -360,7 +365,7 @@ public class Main {
         } else if(opt == 2){
             while(id < 0 || id > books.size()){
                 System.out.println("Автора какой книги вы хотите изменить?");
-                for(Book book : books)  book.getAuthor();
+                for(Book book : books)  System.out.println(book.getId() + " - " + book.getName() + " - " + book.getAuthor());
                 id = scanner.nextInt();
             }
             System.out.println("Напишите новое название книги: ");
@@ -386,7 +391,7 @@ public class Main {
         } else if (opt == 5){
             while(id < 0 || id > books.size()){
                 System.out.println("Издателя какой книги вы хотите изменить?");
-                for(Book book : books)  book.getPublisher();
+                for(Book book : books)  System.out.println(book.getId() + " - " + book.getName() + " - " + book.getPublisher());
                 id = scanner.nextInt();
             }
             System.out.println("Введите нового издатедя: ");
@@ -396,7 +401,7 @@ public class Main {
         } else if (opt == 6){
             while(id < 0 || id > books.size()){
                 System.out.println("Кол-во страниц какой книги вы хотите изменить?");
-                for(Book book : books)  book.getPages();
+                for(Book book : books)  System.out.println(book.getId() + " - " + book.getName() + " - " + book.getPages());
                 id = scanner.nextInt();
             }
             System.out.println("Введите новое кол-во страниц: ");
@@ -413,7 +418,6 @@ public class Main {
             books.get(id).changeRating(newRating);
         } else System.out.println("Такой опции нет!");
     }
-
     public static void changeFilmMenu(ArrayList<Film> films){
         Scanner scanner = new Scanner(System.in);
         System.out.println("Что вы хотите изменить?" +
@@ -427,9 +431,7 @@ public class Main {
         int id = -1;
         if(opt == 1){
             while(id < 0 || id > films.size()){
-                System.out.println("Название какого фильма вы хотите изменить?");
-                for(Film film : films)  film.getIdName();
-                id = scanner.nextInt();
+                id = printFilms(films, "Название какого фильма вы хотите изменить?", id);
             }
             System.out.println("Напишите новое название фильма: ");
             scanner.nextLine();
@@ -454,14 +456,14 @@ public class Main {
         } else if(opt == 4){
             while(id < 0 || id > films.size()){
                 System.out.println("Создателей какго фильма вы хотите изменить?");
-                for(Film film : films)  film.getIdCreators();
+                for(Film film : films)  System.out.println(film.getId() + " - " + film.getName() + " - " + film.getCreators());
                 id = scanner.nextInt();
             }
             films.get(id).changeCreators();
         } else if(opt == 5){
             while(id < 0 || id > films.size()){
                 System.out.println("Продолжительность какго фильма вы хотите изменить?");
-                for(Film film : films)  film.getDuration();
+                for(Film film : films)  System.out.println(film.getId() + " - " + film.getName() + " - " + film.getDuration());
                 id = scanner.nextInt();
             }
             System.out.println("Введите новую продолжительность фильма(в минутах): ");
@@ -479,10 +481,29 @@ public class Main {
         } else System.out.println("Такой опции нет!");
     }
 
+    public static void deleteBook(ArrayList<Book> books){
+        int id = -1;
+        while(id < 0 || id > books.size()){
+            id = printBooks(books, "Какую книгу вы хотите удалить?", id);
+        }
+        books.remove(id);
+        for(Book book : books) book.updateId(books);
+        System.out.println("Книга успешно удалёна.");
+    }
+    public static void deleteFilm(ArrayList<Film> films){
+        Scanner scanner = new Scanner(System.in);
+        int id = -1;
+        while(id < 0 || id > films.size()){
+            id = printFilms(films, "Какой фильм вы хотите удалить", id);
+        }
+        films.remove(id);
+        for(Film film : films) film.updateId(films);
+        System.out.println("Фильм успешно удалён.");
+    }
+
     public static void main(String[] args) {
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
-
         Scanner scanner = new Scanner(System.in);
 
         ArrayList<Book> books = new ArrayList<>();
@@ -495,42 +516,59 @@ public class Main {
                 2021, new ArrayList<>(Arrays.asList("Кристи Голд", "Майкл Ковак")),210, 3.7));
 
         int option = 0;
-
         while(option != 7) {
-            try {
-                String json = mapper.writeValueAsString(Map.of("books", books, "films", films));
-                Files.write(Paths.get("media_library.json"), json.getBytes());
 
-                System.out.println("Данные успешно записаны!");
-
-            } catch (IOException e) {
-                System.err.println("Ошибка при записи файла: " + e.getMessage());
-                e.printStackTrace();
-            } catch (Exception e) {
-                System.err.println("Неожиданная ошибка: " + e.getMessage());
-                e.printStackTrace();
-            }
-            
+            int choice = -1;
             showMenu();
+
             option = scanner.nextInt();
             switch (option){
                 case 1:
-                    getAllBooks(books);
+                    choice = mediaChoice(choice);
+                    if(choice == 1) getAllBooks(books);
+                    else if(choice == 2) getAllFilms(films);
                     break;
                 case 2:
-                    getAllFilms(films);
+                    choice = mediaChoice(choice);
+                    if(choice == 1) addBook(books);
+                    else if(choice == 2) addFilm(films);
                     break;
                 case 3:
-                    addBook(books);
+                    choice = mediaChoice(choice);
+                    if(choice == 1) changeBookMenu(books);
+                    else if(choice == 2) changeFilmMenu(films);
                     break;
                 case 4:
-                    addFilm(films);
+                    choice = mediaChoice(choice);
+                    if(choice == 1) deleteBook(books);
+                    else if(choice == 2) deleteFilm(films);
                     break;
                 case 5:
-                    changeBookMenu(books);
+                    try {
+                        Book testBook = new Book(books.size(), "Test", "textAuthor",
+                                new ArrayList<>(Arrays.asList("test1", "test2")), 2000, "testPublisher", 100, 0.0);
+                        mapper.writeValue(new File("test.json"), testBook);
+
+                        Map<String, Object> data = new LinkedHashMap<>();
+                        data.put("books", books);
+                        data.put("films", films);
+
+                        mapper.writeValue(new File("media_library.json"), data);
+                        System.out.println("Данные успешно записаны!");
+
+                        String json = mapper.writeValueAsString(data);
+                        System.out.println(json);
+
+                    } catch (IOException e) {
+                        System.err.println("Ошибка при записи файла: " + e.getMessage());
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        System.err.println("Неожиданная ошибка: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                     break;
                 case 6:
-                    changeFilmMenu(films);
+
                     break;
                 case 7:
                     break;
