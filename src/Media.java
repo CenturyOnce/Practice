@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -16,16 +14,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 })
 abstract class Media {
     protected int id;
-    protected String type;
     protected String name;
-    protected ArrayList<String> genres;
+    protected Set<String> genres;
     protected int year;
     protected double rating;
 
-    public Media() {}
+    protected Media() {}
 
-    public Media(String type, int id, String name, ArrayList<String> genres, int year, double rating) {
-        this.type = type;
+    protected Media(int id, String name, Set<String> genres, int year, double rating) {
         this.id = id;
         this.name = name;
         this.genres = genres;
@@ -34,7 +30,7 @@ abstract class Media {
     }
 
     public void getInfo() {
-        System.out.println("ID: " + id + "\nТип: " + type + "\nНазвание: " + name + "\nЖанры: " + genres + "\nГод выхода: " + year +
+        System.out.println("ID: " + id + "\nТип: " + getType() + "\nНазвание: " + name + "\nЖанры: " + genres + "\nГод выхода: " + year +
                 "\nСредняя оценка: " + rating);
         getSecondaryInfo();
     }
@@ -44,11 +40,10 @@ abstract class Media {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Media media = (Media) o;
-        return id == media.id &&  // Если нужно учитывать ID, иначе удалите эту строку
+        return id == media.id &&
                 Double.compare(media.rating, rating) == 0 &&
                 year == media.year &&
-                Objects.equals(name, media.name) &&
-                Objects.equals(genres, media.genres);
+                Objects.equals(name, media.name);
     }
 
     void getSecondaryInfo() {}
@@ -57,40 +52,14 @@ abstract class Media {
         System.out.println(id + " - " + name);
     }
 
-    String getAuthor() {
-        return "";
-    }
-    void setAuthor(String author) {}
-    void getIdPublisher() {}
-    void setPublisher(String publisher) {}
-    void getIdPages() {}
-    int getPages(){ return 0; }
-    void setPages(int amountOfPages) {}
-    ArrayList<String> getCreators() {
-        return genres;
-    }
-    void changeCreators() {}
-    int getDuration() {
-        return 0;
-    }
-    public void setDuration(int durationMinutes) {}
-
-    public void getIdYear() {
-        System.out.println(id + " - " + name + " - " + year);
-    }
-
-    public void getIdGenres() {
-        System.out.println(id + " - " + name + " - " + getGenres());
-    }
-
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
-    public ArrayList<String> getGenres() { return genres; }
-    public void setGenres(ArrayList<String> genres) { this.genres = genres; }
+    public Set<String> getGenres() { return genres; }
+    public void setGenres(Set<String> genres) { this.genres = genres; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public String getType() { return ""; }
+    public void setType(String type) {}
 
     public String getName() { return String.format(name); }
     public void setName(String name) { this.name = name; }
@@ -101,9 +70,6 @@ abstract class Media {
     public double getRating() { return rating; }
     public void setRating(double rating) { this.rating = rating; }
 
-    public void getIdRating() {
-        System.out.println(id + " - " + name + " - " + rating);
-    }
 
     public void changeGenres() {
         Scanner scanner = new Scanner(System.in);
@@ -115,33 +81,53 @@ abstract class Media {
                     "3 - Заменить жанр");
             opt = scanner.nextInt();
         }
-        int del = 0;
+        String del = null;
+        Iterator<String> iterator = genres.iterator();
         if (opt == 1) {
-            while (del <= 0 || del > genres.size()) {
+            while (!genres.contains(del)) {
                 System.out.println("Какой жанр хотите удалить?");
-                for (int i = 1; i < genres.size() + 1; i++) {
-                    System.out.println(i + " - " + genres.get(i - 1));
+                for (int i = 0; i < genres.size() && iterator.hasNext(); i++) {
+                    String element = iterator.next();
+                    System.out.println(element);
                 }
-                del = scanner.nextInt();
+                scanner.nextLine();
+                del = scanner.nextLine();
+                if(!genres.contains(del)) System.out.println("Такого жанра в списке нет!");
             }
-            genres.remove(del - 1);
+            genres.remove(del);
+            System.out.println("Жанр успешно удалён.");
         } else if (opt == 2) {
             System.out.println("Введите жанр, который хотите добавить: ");
             scanner.nextLine();
             String newGenre = scanner.nextLine();
-            genres.add(newGenre);
-        } else if (opt == 3) {
-            while (del <= 0 || del > genres.size()) {
-                System.out.println("Какой жанр хотите заменить?");
-                for (int i = 1; i < genres.size() + 1; i++) {
-                    System.out.println(i + " - " + genres.get(i - 1));
-                }
-                del = scanner.nextInt();
-                scanner.nextLine();
+            if(genres.contains(newGenre)) System.out.println("Такой жанр уже есть!");
+            else {
+                genres.add(newGenre);
+                System.out.println("Жанр успешно добавлен");
             }
-            System.out.println("Введите новый жанр для замены: ");
-            String newGenre = scanner.nextLine();
-            genres.set(del - 1, newGenre);
+        } else if (opt == 3) {
+            String element;
+            while (!genres.contains(del)) {
+                System.out.println("Какой жанр хотите заменить?");
+                scanner.nextLine();
+                for (int i = 0; i < genres.size() && iterator.hasNext(); i++) {
+                    element = iterator.next();
+                    System.out.println(element);
+                }
+                del = scanner.nextLine();
+                if(!genres.contains(del)) System.out.println("Такого жанра в списке нет!");
+            }
+            genres.remove(del);
+            String newGenre = null;
+            while(!genres.contains(newGenre)) {
+                System.out.println("Введите новый жанр для замены: ");
+                newGenre = scanner.nextLine();
+                if(genres.contains(newGenre)) System.out.println("Такой жанр уже есть!");
+                else {
+                    genres.add(newGenre);
+                    System.out.println("Жанр успешно заменён.");
+                }
+            }
         }
     }
 }

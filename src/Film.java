@@ -1,13 +1,16 @@
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Set;
 
 class Film extends Media {
+    final public static String TYPE = "Фильм";
+
     private ArrayList<String> creators;
     private int duration;
 
     public Film() {}
-    public Film(String type, int id, String name, ArrayList<String> genres, int year, ArrayList<String> creators, int duration, double rating) {
-        super(type, id, name, genres, year, rating);
+    public Film(int id, String name, Set<String> genres, int year, ArrayList<String> creators, int duration, double rating) {
+        super(id, name, genres, year, rating);
         this.creators = creators;
         this.duration = duration;
     }
@@ -19,26 +22,25 @@ class Film extends Media {
 
     @Override
     public void setType(String type) {
-        super.setType(type);  // сохраняет значение в родительском классе
+        super.setType(type);
     }
-
     @Override
+    public String getType() {
+        return TYPE;
+    }
     public int getDuration() {
         return duration;
     }
 
-    @Override
     public void setDuration(int duration) {
         this.duration = duration;
     }
 
-    @Override
     public ArrayList<String> getCreators() {
         return creators;
     }
     public void setCreators(ArrayList<String> creators) { this.creators = creators; }
 
-    @Override
     public void changeCreators() {
         Scanner scanner = new Scanner(System.in);
         int opt = 0;

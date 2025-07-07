@@ -1,0 +1,294 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+public class MediaManager {
+    private final ObjectMapper mapper;
+    private ArrayList<Media> mediaList;
+
+    public MediaManager(ObjectMapper mapper, ArrayList<Media> mediaList){
+        this.mapper = mapper;
+        this.mediaList = mediaList;
+    }
+
+    public void readFromFile(int choice) throws IOException {
+        Scanner scanner = new Scanner(System.in);
+        List<Media> parsedList = mapper.readValue(
+                new File("media_library.json"),
+                mapper.getTypeFactory().constructCollectionType(List.class, Media.class)
+        );
+
+        System.out.println("Прочитанный JSON: " + mapper.writeValueAsString(parsedList));
+        while(choice < 1 || choice > 3) {
+            System.out.println("Хотите ли вы сделать что-либо с этими данными?" +
+                    "\n1 - Заменить содержимое списка данными" +
+                    "\n2 - Добавить данные в список" +
+                    "\n3 - Нет");
+            choice = scanner.nextInt();
+            if(choice == 1){
+                mediaList = new ArrayList<>(parsedList);
+                System.out.println("Данные занесены в список");
+            } else if(choice == 2){
+                int addedCount = 0;
+
+                for (Media newMedia : parsedList) {
+                    if (!mediaList.contains(newMedia)) {
+                        newMedia.setId(mediaList.size());
+                        mediaList.add(newMedia);
+                        addedCount++;
+                    }
+                }
+
+                System.out.println("Добавлено новых объектов: " + addedCount);
+            } else if(choice == 3) break;
+            else System.out.println("Такой опции нет!");
+        }
+
+    }
+
+    public void writeInFile() throws IOException{
+        ArrayNode jsonArray = mapper.valueToTree(mediaList);
+
+        for (JsonNode node : jsonArray) {
+            ObjectNode mediaNode = (ObjectNode) node;
+            mediaNode.put("mediaType", mediaNode.get("type").asText());
+        }
+
+        mapper.writeValue(new File("media_library.json"), jsonArray);
+        System.out.println("Данные успешно записаны!");
+    }
+
+    public static boolean doesMediaExist(ArrayList<Media> mediaList, String type){
+        int mediaCount = 0;
+        for(Media media : mediaList){
+            if(media.getType().equals(type)) mediaCount += 1;
+        }
+        if(mediaCount == 0) {
+            System.out.println("Объектов с таким типом в списке нет.");
+            return false;
+        }
+        return true;
+    }
+
+    public static void getAllMediaType(ArrayList<Media> mediaList, String type){
+        if(!doesMediaExist(mediaList, type)) return;
+        for(Media media : mediaList){
+            if(media.getType().equals(type)) media.getInfo();
+        }
+    }
+
+    public static void printMedia(ArrayList<Media> mediaList, String question, String type){
+        if(!doesMediaExist(mediaList, type)) return;
+        System.out.println(question);
+        for(Media media : mediaList){
+            if(media.getType().equals(type)) media.getIdName();
+        }
+    }
+    public static int mediaChoice(int choice){
+        Scanner scanner = new Scanner(System.in);
+        while(choice < 0 || choice >2){
+            System.out.println("С чем вы хотите выполнить действие?" +
+                    "\n1 - Книга" +
+                    "\n2 - Фильм");
+            choice = scanner.nextInt();
+        }
+        return choice;
+    }
+
+    public static void deleteMedia(ArrayList<Media> mediaList, String type){
+        if(!doesMediaExist(mediaList, type)) return;
+        int id = -1;
+        while(id < 0 || id > mediaList.size()){
+            printMedia(mediaList, "Какой объект вы хотите удалить", type);
+            id = idCheck(mediaList, type);
+        }
+        mediaList.remove(id);
+        for(int i = 0; i < mediaList.size(); i++) mediaList.get(i).setId(i);
+        System.out.println("Объект успешно удалён.");
+    }
+
+    public static int idCheck(ArrayList<Media> mediaList, String type){
+        Scanner scanner = new Scanner(System.in);
+        int id = scanner.nextInt();
+        if(!mediaList.get(id).getType().equals(type)){
+            System.out.println("Объекта выбранного типа с таким id нет!");
+            id = -1;
+        }
+        return id;
+    }
+
+    public static void addMedia(ArrayList<Media> mediaList, String type){
+        int id = mediaList.size();
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Введите название: ");
+        String name = scanner.nextLine();
+        System.out.println("Введите количество жанров: ");
+        int amountOfGenres = scanner.nextInt();
+        System.out.println("Введите жанры(" + amountOfGenres + ", каждый через Enter): ");
+        scanner.nextLine();
+        Set<String> genres = new HashSet<>();
+        for(int i = 0; i < amountOfGenres; i++){
+            String genre = scanner.nextLine();
+            genres.add(genre);
+        }
+        System.out.println("Введите год выхода: ");
+        int pubYear = scanner.nextInt();
+        System.out.println("Введите среднюю оценку: ");
+        double rating = scanner.nextDouble();
+        scanner.nextLine();
+        if(type.equals("Книга")){
+            System.out.println("Введите издателя: ");
+            String publisher = scanner.nextLine();
+            System.out.println("Введите кол-во страниц: ");
+            int amountOfPages = scanner.nextInt();
+            System.out.println("Введите автора книги: ");
+            String author = scanner.nextLine();
+            mediaList.add(new Book(id, name, author, genres, pubYear, publisher, amountOfPages, rating));
+        } else if(type.equals("Фильм")) {
+            System.out.println("Введите кол-во создателей: ");
+            int creatorsNum = scanner.nextInt();
+            scanner.nextLine();
+            System.out.println("Введите создателей(" + creatorsNum + ", каждый через Enter): ");
+            ArrayList<String> creators = new ArrayList<>();
+            for(int i = 0; i < creatorsNum; i++){
+                String creator = scanner.nextLine();
+                creators.add(creator);
+            }
+            System.out.println("Введите продолжительность фильма(в минутах): ");
+            int durationMinutes = scanner.nextInt();
+            mediaList.add(new Film(id, name, genres, pubYear, creators, durationMinutes, rating));
+        }
+    }
+
+    public static void changeMediaMenu(ArrayList<Media> mediaList, String type){
+        if(!doesMediaExist(mediaList, type)) return;
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Что вы хотите изменить?" +
+                "\n1 - Название" +
+                "\n2 - Жанры" +
+                "\n3 - Год выхода" +
+                "\n4 - Средняя оценка");
+        if(type.equals("Книга")) System.out.println("5 - Автор" +
+                "\n6 - Издатель" +
+                "\n7 - Кол-во страниц");
+        else if (type.equals("Фильм")) {
+            System.out.println("5 - Создатели" + "\n6 - Продолжительность фильма");
+        }
+        int opt = scanner.nextInt();
+        int id = -1;
+        if(opt == 1){
+            while(id < 0 || id > mediaList.size()){
+                printMedia(mediaList, "Название какого объекта вы хотите изменить?", type);
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Напишите новое название объекиа: ");
+            scanner.nextLine();
+            String newName = scanner.nextLine();
+            mediaList.get(id).setName(newName);
+        } else if(opt == 2){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Жанры какого объекта вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName() +
+                            " - " + media.getGenres());
+                }
+                id = idCheck(mediaList, type);
+            }
+            mediaList.get(id).changeGenres();
+        } else if(opt == 3){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Год выхода какго объекта вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName() +
+                            " - " + media.getYear());
+                }
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Введите новый год выпуска: ");
+            int newYear = scanner.nextInt();
+            mediaList.get(id).setPubYear(newYear);
+        } else if(opt == 4){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Среднюю оценку какого объекта вы хотите изменить?");
+                for(Media media : mediaList)  System.out.println(media.getId() + " - " + media.getName() +
+                        " - " + media.getRating());
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Введите новую среднюю оценку: ");
+            double newRating = scanner.nextDouble();
+            mediaList.get(id).setRating(newRating);
+        } else if(opt == 5 && type.equals("Фильм")){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Создателей какго фильма вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName() + " - "
+                            + ((Film) media).getCreators());
+                }
+                id = idCheck(mediaList, type);
+            }
+            final Media currentMedia = mediaList.get(id);
+            ((Film) currentMedia).changeCreators();
+        } else if(opt == 6 && type.equals("Фильм")){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Продолжительность какго фильма вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName() + " - "
+                            + ((Film) media).getDuration());
+                }
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Введите новую продолжительность фильма(в минутах): ");
+            int minutes = scanner.nextInt();
+            final Media currentMedia = mediaList.get(id);
+            ((Film) currentMedia).setDuration(minutes);
+        } else if(opt == 5 && type.equals("Книга")){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Автора какой книги вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type))System.out.println(media.getId() + " - " + media.getName() + " - " +
+                            ((Book) media).getAuthor());
+                }
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Напишите новое название книги: ");
+            scanner.nextLine();
+            String newAuthor = scanner.nextLine();
+            final Media currentMedia = mediaList.get(id);
+            ((Book) currentMedia).setAuthor(newAuthor);
+        } else if(opt == 6 && type.equals("Книга")){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Издателя какой книги вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName()
+                            + " - " + ((Book) media).getPublisher());
+                }
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Введите нового издатедя: ");
+            scanner.nextLine();
+            String newPublisher = scanner.nextLine();
+            final Media currentMedia = mediaList.get(id);
+            ((Book) currentMedia).setPublisher(newPublisher);
+
+        } else if(opt == 7 && type.equals("Книга")){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Кол-во страниц какой книги вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName() +
+                            " - " +((Book) media).getPages());
+                }
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Введите новое кол-во страниц: ");
+            int pages = scanner.nextInt();
+            final Media currentMedia = mediaList.get(id);
+            ((Book) currentMedia).setPages(pages);
+        }
+        else System.out.println("Такой опции нет!");
+    }
+}
