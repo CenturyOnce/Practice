@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 
 public class MediaManager {
     private final ObjectMapper mapper;
     private ArrayList<Media> mediaList;
+    static SQLiteManager sqlite = new SQLiteManager("media.db");
 
     public MediaManager(ObjectMapper mapper, ArrayList<Media> mediaList){
         this.mapper = mapper;
@@ -100,14 +102,16 @@ public class MediaManager {
         return choice;
     }
 
-    public static void deleteMedia(ArrayList<Media> mediaList, String type){
+    public static void deleteMedia(ArrayList<Media> mediaList, String type) throws SQLException {
         if(!doesMediaExist(mediaList, type)) return;
         int id = -1;
         while(id < 0 || id > mediaList.size()){
             printMedia(mediaList, "Какой объект вы хотите удалить", type);
             id = idCheck(mediaList, type);
         }
+        sqlite.deleteMedia(id);
         mediaList.remove(id);
+        for (Media media : mediaList) sqlite.updateMedia(media);
         for(int i = 0; i < mediaList.size(); i++) mediaList.get(i).setId(i);
         System.out.println("Объект успешно удалён.");
     }
@@ -148,7 +152,9 @@ public class MediaManager {
             int amountOfPages = scanner.nextInt();
             System.out.println("Введите автора книги: ");
             String author = scanner.nextLine();
-            mediaList.add(new Book(id, name, author, genres, pubYear, publisher, amountOfPages, rating));
+            Book book = new Book(id, name, author, genres, pubYear, publisher, amountOfPages, rating);
+            mediaList.add(book);
+            sqlite.addMedia(book);
         } else if(type.equals("Фильм")) {
             System.out.println("Введите кол-во создателей: ");
             int creatorsNum = scanner.nextInt();
@@ -161,7 +167,9 @@ public class MediaManager {
             }
             System.out.println("Введите продолжительность фильма(в минутах): ");
             int durationMinutes = scanner.nextInt();
-            mediaList.add(new Film(id, name, genres, pubYear, creators, durationMinutes, rating));
+            Film film = new Film(id, name, genres, pubYear, creators, durationMinutes, rating);
+            mediaList.add(film);
+            sqlite.addMedia(film);
         }
     }
 
@@ -290,5 +298,6 @@ public class MediaManager {
             ((Book) currentMedia).setPages(pages);
         }
         else System.out.println("Такой опции нет!");
+        sqlite.updateMedia(mediaList.get(id));
     }
 }
