@@ -82,7 +82,9 @@ public class Main {
                     sqlLite.clearAllTables();
                     break;
                 case 9:
-                    sqlLite.getAllMedia(); //List создай здесь
+                    List<Media> sqlList = new ArrayList<>();
+                    sqlList = sqlLite.getAllMedia();
+                    for (Media media : sqlList) media.getInfo();//List создай здесь
                     break;
                 default:
                     System.out.println("Такой опции нет! Введите другую!");

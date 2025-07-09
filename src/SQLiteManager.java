@@ -232,18 +232,21 @@ public class SQLiteManager {
         }
     }
 
-    public void clearAllTables() throws SQLException{
+    public void clearAllTables() throws SQLException {
         String disableFK = "PRAGMA foreign_keys = OFF";
         String enableFK = "PRAGMA foreign_keys = ON";
 
-        try (Statement stmt = connection.createStatement()){
+        try (Statement stmt = connection.createStatement()) {
             stmt.execute(disableFK);
 
             stmt.execute("DELETE FROM books");
             stmt.execute("DELETE FROM films");
             stmt.execute("DELETE FROM media");
 
-            stmt.execute("DELETE FRO< sqlite_sequence WHERE name IN('media','books','films')");
+            ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='sqlite_sequence'");
+            if (rs.next()) {
+                stmt.execute("DELETE FROM sqlite_sequence WHERE name IN('media','books','films')");
+            }
 
             stmt.execute(enableFK);
         }
