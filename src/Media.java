@@ -40,10 +40,10 @@ abstract class Media {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Media media = (Media) o;
-        return id == media.id &&
-                Double.compare(media.rating, rating) == 0 &&
+        return Double.compare(media.rating, rating) == 0 &&
                 year == media.year &&
-                Objects.equals(name, media.name);
+                Objects.equals(name, media.name) &&
+                Objects.equals(genres, this.genres);
     }
 
     void getSecondaryInfo() {}
@@ -70,7 +70,6 @@ abstract class Media {
     public double getRating() { return rating; }
     public void setRating(double rating) { this.rating = rating; }
 
-
     public void changeGenres() {
         Scanner scanner = new Scanner(System.in);
         int opt = 0;
@@ -80,6 +79,7 @@ abstract class Media {
                     "2 - Добавить жанр\n" +
                     "3 - Заменить жанр");
             opt = scanner.nextInt();
+            scanner.nextLine();
         }
         String del = null;
         Iterator<String> iterator = genres.iterator();
@@ -90,7 +90,6 @@ abstract class Media {
                     String element = iterator.next();
                     System.out.println(element);
                 }
-                scanner.nextLine();
                 del = scanner.nextLine();
                 if(!genres.contains(del)) System.out.println("Такого жанра в списке нет!");
             }
@@ -98,8 +97,7 @@ abstract class Media {
             System.out.println("Жанр успешно удалён.");
         } else if (opt == 2) {
             System.out.println("Введите жанр, который хотите добавить: ");
-            scanner.nextLine();
-            String newGenre = scanner.nextLine();
+            String newGenre = scanner.nextLine().trim();
             if(genres.contains(newGenre)) System.out.println("Такой жанр уже есть!");
             else {
                 genres.add(newGenre);
@@ -109,7 +107,6 @@ abstract class Media {
             String element;
             while (!genres.contains(del)) {
                 System.out.println("Какой жанр хотите заменить?");
-                scanner.nextLine();
                 for (int i = 0; i < genres.size() && iterator.hasNext(); i++) {
                     element = iterator.next();
                     System.out.println(element);
@@ -121,7 +118,7 @@ abstract class Media {
             String newGenre = null;
             while(!genres.contains(newGenre)) {
                 System.out.println("Введите новый жанр для замены: ");
-                newGenre = scanner.nextLine();
+                newGenre = scanner.nextLine().trim();
                 if(genres.contains(newGenre)) System.out.println("Такой жанр уже есть!");
                 else {
                     genres.add(newGenre);

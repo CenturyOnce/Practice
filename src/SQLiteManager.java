@@ -17,21 +17,21 @@ public class SQLiteManager {
     public void createTables(){
         String mediaSql = "CREATE TABLE IF NOT EXISTS media (" +
                 " id integer PRIMARY KEY," +
-                " type text NOT NULL," +
-                " name text NOT NULL," +
-                " genres text," +
-                " pub_year integer," +
-                " rating real)";
+                " type TEXT NOT NULL," +
+                " name TEXT NOT NULL," +
+                " genres TEXT," +
+                " pub_year INTEGER," +
+                " rating REAL)";
         String bookSql = "CREATE TABLE IF NOT EXISTS books (" +
                 "media_id INTEGER PRIMARY KEY," +
                 "author TEXT NOT NULL," +
-                "publisher text," +
-                "pages integer," +
+                "publisher TEXT," +
+                "pages INTEGER," +
                 "FOREIGN KEY(media_id) REFERENCES media(id))";
         String filmSql = "CREATE TABLE IF NOT EXISTS films (" +
-                "media_id integer PRIMARY KEY," +
-                "creators text NOT NULL," +
-                "duration integer," +
+                "media_id INTEGER PRIMARY KEY," +
+                "creators TEXT NOT NULL," +
+                "duration INTEGER," +
                 "FOREIGN KEY(media_id) REFERENCES media(id))";
 
         try (Statement stmt = connection.createStatement()){
@@ -59,9 +59,9 @@ public class SQLiteManager {
                     int mediaId = rs.getInt(1);
                     media.setId(mediaId);
 
-                    if(media instanceof Book){
+                    if(media.getType().equals(Book.TYPE)){
                         addBook((Book) media, mediaId);
-                    } else if(media instanceof Film){
+                    } else if(media.getType().equals(Film.TYPE)){
                         addFilm((Film) media, mediaId);
                     }
                 }
@@ -88,11 +88,12 @@ public class SQLiteManager {
             pstmt.setInt(1, mediaId);
             pstmt.setString(2, String.join(", ", film.getCreators()));
             pstmt.setInt(3, film.getDuration());
+            pstmt.executeUpdate();
         }
     }
 
     public void updateMedia(Media media){
-        String sql = "UPDATE media SET name=?, genres=?, pub_year=?, rating=?, WHERE id=?";
+        String sql = "UPDATE media SET name=?, genres=?, pub_year=?, rating=? WHERE id=?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, media.getName());
@@ -124,7 +125,7 @@ public class SQLiteManager {
         }
     }
     private void updateFilm(Film film) throws SQLException{
-        String sql = "UPDATE books SET author=?, publisher=?, pages=? WHERE media_id=?";
+        String sql = "UPDATE books SET creators=?, duration=? WHERE media_id=?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, String.join(", ", film.getCreators()));
@@ -150,7 +151,7 @@ public class SQLiteManager {
                 String type = rs.getString("type");
                 Media media;
 
-                if("BOOK".equals(type)){
+                if(Book.TYPE.equals(type)){
                     media = getBookFromRS(rs);
                 } else {
                     media = getFilmFromRS(rs);
@@ -189,7 +190,7 @@ public class SQLiteManager {
         }
         String creatorsStr = rs.getString("creators");
         ArrayList<String> creators = new ArrayList<>();
-        if(creatorsStr!=null && !genresStr.isEmpty()){
+        if(creatorsStr!=null && !creatorsStr.isEmpty()){
             creators = new ArrayList<>(Arrays.asList(creatorsStr.split(", ")));
         }
         Film film = new Film(
@@ -198,11 +199,47 @@ public class SQLiteManager {
                 genres,
                 rs.getInt("pub_year"),
                 creators,
-                rs.getInt("pages"),
+                rs.getInt("duration"),
                 rs.getDouble("rating")
         );
         film.setId(rs.getInt("id"));
         return film;
+    }
+
+    public List<Media> searchByName(String searchTerm) throws SQLException{
+        List<Media> result = new ArrayList<>();
+        String searchPattern = "%" + searchTerm + "%";
+        String sql = "SELECT m.id, m.type, m.name, m.genres, m.pub_year, m.rating," +
+                "b.author, b.publisher, b.pages," +
+                "f.creators, f.duration " +
+                "FROM media m " +
+                "LEFT JOIN books b ON m.id=b.media_id " +
+                "LEFT JOIN films f ON m.id=f.media_id " +
+                "WHERE m.name LIKE ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)){
+            pstmt.setString(1, searchPattern);
+
+            try (ResultSet rs = pstmt.executeQuery()){
+                while(rs.next()){
+                    String type = rs.getString("type");
+                    Media media = null;
+
+                    if(type!=null){
+                        if(Book.TYPE.equals(type)){
+                            media = getBookFromRS(rs);
+                        } else if(Film.TYPE.equals(type)){
+                            media = getFilmFromRS(rs);
+                        }
+                    }
+
+                    if(media!=null){
+                        result.add(media);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     public void deleteMedia(int id) throws SQLException{
@@ -215,7 +252,7 @@ public class SQLiteManager {
                 if(rs.next()){
                     type = rs. getString("type");
 
-                    String childSQL = "DELETE FROM " + ("BOOK".equals(type)?"books":"films") +
+                    String childSQL = "DELETE FROM " + ("Книга".equals(type)?"books":"films") +
                             " WHERE media_id=?";
                     try (PreparedStatement childPstmt = connection.prepareStatement(childSQL)){
                         childPstmt.setInt(1, id);

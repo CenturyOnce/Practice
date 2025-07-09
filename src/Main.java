@@ -1,3 +1,5 @@
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -8,7 +10,7 @@ import java.io.IOException;
 
 public class Main {
     public static void showMenu(){
-        System.out.println("Вы находитесь в медиатеке. Что вы хотите сделать?" +
+        String menu = "Вы находитесь в медиатеке. Что вы хотите сделать?" +
                 "\n0 - Посмотреть все объекты" +
                 "\n1 - Получить информацию о книгах/фильмах" +
                 "\n2 - Добавить книгу/фильм" +
@@ -18,7 +20,10 @@ public class Main {
                 "\n6 - Считать информацию с файла" +
                 "\n7 - Выход" +
                 "\n8 - Очистить таблицы" +
-                "\n9 - Вывести данные из таблицы");
+                "\n9 - Вывести данные из таблицы" +
+                "\n10 - Обновить таблицы" +
+                "\n11 - Поиск";
+        System.out.println(new String(menu.getBytes(), StandardCharsets.UTF_8));
     }
 
     public static void main(String[] args) throws IOException, SQLException {
@@ -35,8 +40,9 @@ public class Main {
                 2019, new ArrayList<>(Arrays.asList("Нэйтан Блэк", "Брайс Папенбрук")),153, 4.2));
         mediaList.add(new Film(mediaList.size(), "На другой стороне", new HashSet<>(Set.of("Приключения", "Хоррор", "Экшен")),
                 2021, new ArrayList<>(Arrays.asList("Кристи Голд", "Майкл Ковак")),210, 3.7));
-        for(int i = 0; i < mediaList.size(); i++){
-            sqlLite.addMedia(mediaList.get(i));
+        sqlLite.clearAllTables();
+        for (Media media : mediaList) {
+            sqlLite.addMedia(media);
         }
         int option = -1;
         while(option != 7) {
@@ -82,9 +88,22 @@ public class Main {
                     sqlLite.clearAllTables();
                     break;
                 case 9:
-                    List<Media> sqlList = new ArrayList<>();
-                    sqlList = sqlLite.getAllMedia();
-                    for (Media media : sqlList) media.getInfo();//List создай здесь
+                    List<Media> sqlList = sqlLite.getAllMedia();
+                    for (Media media : sqlList) media.getInfo();
+                    break;
+                case 10:
+                    sqlLite.clearAllTables();
+                    for (Media media : mediaList) {
+                        sqlLite.addMedia(media);
+                    }
+                    break;
+                case 11:
+                    System.out.println("Введите название объекта, который вы хотите найти: ");
+                    scanner.nextLine();
+                    String searchTerm = scanner.nextLine().trim();
+                    List<Media> sqlSearchList = sqlLite.searchByName(searchTerm);
+                    if(sqlSearchList.size() == 0) System.out.println("Совпадений нет.");
+                    else for (Media media : sqlSearchList) media.getInfo();
                     break;
                 default:
                     System.out.println("Такой опции нет! Введите другую!");
