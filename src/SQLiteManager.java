@@ -208,17 +208,22 @@ public class SQLiteManager {
 
     public List<Media> searchByName(String searchTerm) throws SQLException{
         List<Media> result = new ArrayList<>();
-        String searchPattern = "%" + searchTerm + "%";
         String sql = "SELECT m.id, m.type, m.name, m.genres, m.pub_year, m.rating," +
                 "b.author, b.publisher, b.pages," +
                 "f.creators, f.duration " +
                 "FROM media m " +
                 "LEFT JOIN books b ON m.id=b.media_id " +
                 "LEFT JOIN films f ON m.id=f.media_id " +
-                "WHERE m.name LIKE ?";
+                "WHERE m.name LIKE ? OR " +
+                "m.genres LIKE ? OR " +
+                "b.author LIKE ? OR " +
+                "f.creators LIKE ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)){
-            pstmt.setString(1, searchPattern);
+            pstmt.setString(1, searchTerm);
+            pstmt.setString(2, searchTerm);
+            pstmt.setString(3, searchTerm);
+            pstmt.setString(4, searchTerm);
 
             try (ResultSet rs = pstmt.executeQuery()){
                 while(rs.next()){
@@ -287,6 +292,7 @@ public class SQLiteManager {
 
             stmt.execute(enableFK);
         }
+        System.out.println("Таблицы успешно очищены.");
     }
 
     public void close() throws SQLException{

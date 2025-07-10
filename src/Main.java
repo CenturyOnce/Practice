@@ -21,7 +21,7 @@ public class Main {
                 "\n7 - Выход" +
                 "\n8 - Очистить таблицы" +
                 "\n9 - Вывести данные из таблицы" +
-                "\n10 - Обновить таблицы" +
+                "\n10 - Записать данные в таблицы" +
                 "\n11 - Поиск";
         System.out.println(new String(menu.getBytes(), StandardCharsets.UTF_8));
     }
@@ -40,10 +40,6 @@ public class Main {
                 2019, new ArrayList<>(Arrays.asList("Нэйтан Блэк", "Брайс Папенбрук")),153, 4.2));
         mediaList.add(new Film(mediaList.size(), "На другой стороне", new HashSet<>(Set.of("Приключения", "Хоррор", "Экшен")),
                 2021, new ArrayList<>(Arrays.asList("Кристи Голд", "Майкл Ковак")),210, 3.7));
-        sqlLite.clearAllTables();
-        for (Media media : mediaList) {
-            sqlLite.addMedia(media);
-        }
         int option = -1;
         while(option != 7) {
             int choice = -1;
@@ -76,7 +72,14 @@ public class Main {
                     else if(choice == 2) MediaManager.deleteMedia(mediaList, Film.TYPE);
                     break;
                 case 5:
-                    manager.writeInFile();
+                    while(choice < 0 || choice > 2){
+                        System.out.println("Вы точно хотите изменить содержание файла?" +
+                                "\n1 - Да" +
+                                "\n2 - Нет");
+                        choice = scanner.nextInt();
+                        if(choice == 1) manager.writeInFile();
+                        else if(choice == 2) break;
+                    }
                     break;
                 case 6:
                     manager.readFromFile(choice);
@@ -85,7 +88,14 @@ public class Main {
                     System.exit(0);
                     break;
                 case 8:
-                    sqlLite.clearAllTables();
+                    while(choice < 0 || choice > 2){
+                        System.out.println("Вы точно хотите очистить таблицы?" +
+                                "\n1 - Да" +
+                                "\n2 - Нет");
+                        choice = scanner.nextInt();
+                        if(choice == 1) sqlLite.clearAllTables();
+                        else if(choice == 2) break;
+                    }
                     break;
                 case 9:
                     List<Media> sqlList = sqlLite.getAllMedia();
@@ -96,11 +106,12 @@ public class Main {
                     for (Media media : mediaList) {
                         sqlLite.addMedia(media);
                     }
+                    System.out.println("Таблицы были успешно обновлены.");
                     break;
                 case 11:
-                    System.out.println("Введите название объекта, который вы хотите найти: ");
+                    System.out.println("Введите какой-либо термин, по которому можно найти объекты: ");
                     scanner.nextLine();
-                    String searchTerm = scanner.nextLine().trim();
+                    String searchTerm = "%" + scanner.nextLine().trim() + "%";
                     List<Media> sqlSearchList = sqlLite.searchByName(searchTerm);
                     if(sqlSearchList.size() == 0) System.out.println("Совпадений нет.");
                     else for (Media media : sqlSearchList) media.getInfo();
