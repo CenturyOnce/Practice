@@ -43,7 +43,8 @@ public class SQLiteManager {
         }
     }
 
-    public void addMedia(Media media){
+    public void addMedia(Media media) throws SQLException{
+
         String sql = "INSERT INTO media(type, name, genres, pub_year, rating) VALUES(?,?,?,?,?)";
 
         try(PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
@@ -66,8 +67,6 @@ public class SQLiteManager {
                     }
                 }
             }
-        } catch (SQLException e){
-            System.out.println(e.getMessage());
         }
     }
 
@@ -257,7 +256,7 @@ public class SQLiteManager {
                 if(rs.next()){
                     type = rs. getString("type");
 
-                    String childSQL = "DELETE FROM " + ("Книга".equals(type)?"books":"films") +
+                    String childSQL = "DELETE FROM " + (Book.TYPE.equals(type)?"books":"films") +
                             " WHERE media_id=?";
                     try (PreparedStatement childPstmt = connection.prepareStatement(childSQL)){
                         childPstmt.setInt(1, id);

@@ -18,7 +18,7 @@ public class MediaManager {
         this.mediaList = mediaList;
     }
 
-    public void readFromFile(int choice) throws IOException {
+    public void readFromFile(int choice) throws IOException, SQLException {
         Scanner scanner = new Scanner(System.in);
         List<Media> parsedList = mapper.readValue(
                 new File("media_library.json"),
@@ -33,8 +33,9 @@ public class MediaManager {
                     "\n3 - Нет");
             choice = scanner.nextInt();
             if(choice == 1){
-                mediaList = new ArrayList<>(parsedList);
-                System.out.println("Данные занесены в список");
+                mediaList.clear();
+                for(Media media : parsedList) mediaList.add(media);
+                System.out.println("Данные заменены");
             } else if(choice == 2){
                 int addedCount = 0;
 
@@ -106,8 +107,8 @@ public class MediaManager {
     public static void deleteMedia(ArrayList<Media> mediaList, String type) throws SQLException {
         if(!doesMediaExist(mediaList, type)) return;
         int id = -1;
-        while(id < 1 || id > mediaList.size()+1){
-            printMedia(mediaList, "Какой объект вы хотите удалить", type);
+        while(id < 0 || id > mediaList.size()){
+            printMedia(mediaList, "Какой объект вы хотите удалить?", type);
             id = idCheck(mediaList, type);
         }
         sqlite.deleteMedia(id);
@@ -126,7 +127,7 @@ public class MediaManager {
         return id;
     }
 
-    public static void addMedia(ArrayList<Media> mediaList, String type){
+    public static void addMedia(ArrayList<Media> mediaList, String type) throws SQLException{
         int id = mediaList.size();
         Scanner scanner = new Scanner(System.in);
         System.out.println("Введите название: ");

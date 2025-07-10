@@ -1,4 +1,3 @@
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.*;
@@ -22,8 +21,14 @@ public class Main {
                 "\n8 - Очистить таблицы" +
                 "\n9 - Вывести данные из таблицы" +
                 "\n10 - Записать данные в таблицы" +
-                "\n11 - Поиск";
+                "\n11 - Поиск в датабазе";
         System.out.println(new String(menu.getBytes(), StandardCharsets.UTF_8));
+    }
+
+    public static void pauseProgram(){
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Нажмите Enter чтобы продолжить...");
+        scanner.nextLine();
     }
 
     public static void main(String[] args) throws IOException, SQLException {
@@ -34,11 +39,11 @@ public class Main {
         SQLiteManager sqlLite = new SQLiteManager("media.db");
 
         ArrayList<Media> mediaList = new ArrayList<>();
-        mediaList.add(new Book(mediaList.size(), "Мистик", "Фрэнк Оувэл", new HashSet<>(Set.of("Детектив", "Мистика", "Комедия")),
+        mediaList.add(new Book(mediaList.size()+1, "Мистик", "Фрэнк Оувэл", new HashSet<>(Set.of("Детектив", "Мистика", "Комедия")),
                 2016, "Букинист", 235, 4.5));
-        mediaList.add(new Film(mediaList.size(), "Бесконечная история", new HashSet<>(Set.of("Приключения", "Фэнтези", "Комедия", "Экшен")),
+        mediaList.add(new Film(mediaList.size()+1, "Бесконечная история", new HashSet<>(Set.of("Приключения", "Фэнтези", "Комедия", "Экшен")),
                 2019, new ArrayList<>(Arrays.asList("Нэйтан Блэк", "Брайс Папенбрук")),153, 4.2));
-        mediaList.add(new Film(mediaList.size(), "На другой стороне", new HashSet<>(Set.of("Приключения", "Хоррор", "Экшен")),
+        mediaList.add(new Film(mediaList.size()+1, "На другой стороне", new HashSet<>(Set.of("Приключения", "Хоррор", "Экшен")),
                 2021, new ArrayList<>(Arrays.asList("Кристи Голд", "Майкл Ковак")),210, 3.7));
         int option = -1;
         while(option != 7) {
@@ -50,11 +55,13 @@ public class Main {
             switch (option){
                 case 0:
                     for(Media media : mediaList) media.getInfo();
+                    pauseProgram();
                     break;
                 case 1:
                     choice = manager.mediaChoice(choice);
                     if(choice == 1) manager.getAllMediaType(mediaList, Book.TYPE);
                     else if(choice == 2) manager.getAllMediaType(mediaList, Film.TYPE);
+                    pauseProgram();
                     break;
                 case 2:
                     choice = manager.mediaChoice(choice);
@@ -100,6 +107,7 @@ public class Main {
                 case 9:
                     List<Media> sqlList = sqlLite.getAllMedia();
                     for (Media media : sqlList) media.getInfo();
+                    pauseProgram();
                     break;
                 case 10:
                     sqlLite.clearAllTables();
@@ -109,12 +117,13 @@ public class Main {
                     System.out.println("Таблицы были успешно обновлены.");
                     break;
                 case 11:
-                    System.out.println("Введите какой-либо термин, по которому можно найти объекты: ");
+                    System.out.println("Введите какой-либо термин, по которому можно найти объекты в таблице: ");
                     scanner.nextLine();
                     String searchTerm = "%" + scanner.nextLine().trim() + "%";
                     List<Media> sqlSearchList = sqlLite.searchByName(searchTerm);
                     if(sqlSearchList.size() == 0) System.out.println("Совпадений нет.");
                     else for (Media media : sqlSearchList) media.getInfo();
+                    pauseProgram();
                     break;
                 default:
                     System.out.println("Такой опции нет! Введите другую!");

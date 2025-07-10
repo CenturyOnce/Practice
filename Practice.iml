@@ -10,7 +10,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../sqlite-jdbc-3.50.2.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/Addons/jackson-annotations-2.19.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -19,7 +19,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../jackson/jackson-annotations-2.19.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/Addons/jackson-core-2.19.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -28,7 +28,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../jackson/jackson-core-2.19.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/Addons/jackson-databind-2.19.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -37,7 +37,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../jackson/jackson-databind-2.19.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/Addons/sqlite-jdbc-3.49.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
