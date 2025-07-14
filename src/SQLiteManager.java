@@ -3,15 +3,23 @@ import java.util.*;
 
 public class SQLiteManager {
     private Connection connection;
+    private int addedNew;
+    private int changed;
 
     public SQLiteManager(String path){
         String url = "jdbc:sqlite:" + path;
+        addedNew = 0;
+        changed = 0;
         try{
             connection = DriverManager.getConnection(url);
         } catch (SQLException e){
             System.out.println(e.getMessage());
         }
         createTables();
+    }
+
+    public void addedAndChanged(){
+        System.out.println("Добавлено объектов: " + addedNew + "\nИзменено объектов: " + changed);
     }
 
     public void createTables(){
@@ -43,7 +51,51 @@ public class SQLiteManager {
         }
     }
 
+    private boolean mediaExistsById(int id) throws  SQLException{
+        String sql = "SELECT 1 FROM media WHERE id = ?";
+        try(PreparedStatement pstmt = connection.prepareStatement(sql)){
+            pstmt.setInt(1, id);
+            try(ResultSet rs = pstmt.executeQuery()){
+                return rs.next();
+            }
+        }
+    }
+    private boolean identicalMediaExists(Media media) throws SQLException{
+        String sql = "SELECT 1 FROM media WHERE " +
+                "id = ? AND " +
+                "type = ? AND" +
+                "name = ? AND " +
+                "genres = ? AND " +
+                "pub_year = ? AND " +
+                "rating = ?";
+
+        try(PreparedStatement pstmt = connection.prepareStatement(sql)){
+            pstmt.setInt(1, media.getId());
+            pstmt.setString(2, media.getType());
+            pstmt.setString(3, media.getName());
+            pstmt.setString(4, String.join(", ", media.getGenres()));
+            pstmt.setInt(5, media.getYear());
+            pstmt.setDouble(6, media.getRating());
+
+            try(ResultSet rs = pstmt.executeQuery()){
+                if(!rs.next()) return false;
+            }
+        }
+
+        //if(media instanceof Book) return identicalBookExists((Book) media);
+        //else if(media instanceof Film) return  identicalFilmExists((Film) media);
+        return false;
+    }
+
     public void addMedia(Media media) throws SQLException{
+        if(media.getId() > 0 && mediaExistsById(media.getId())){
+            String currType = getMediaType(media.getId());
+            if(currType.equals(media.getType())){
+                updateMedia(media);
+                changed += 1;
+                return;
+            } else System.err.println("Объекты совпадают по ID, но их типы разные");
+        }
 
         String sql = "INSERT INTO media(type, name, genres, pub_year, rating) VALUES(?,?,?,?,?)";
 
@@ -65,6 +117,7 @@ public class SQLiteManager {
                     } else if(media.getType().equals(Film.TYPE)){
                         addFilm((Film) media, mediaId);
                     }
+                    addedNew += 1;
                 }
             }
         }
@@ -89,6 +142,19 @@ public class SQLiteManager {
             pstmt.setInt(3, film.getDuration());
             pstmt.executeUpdate();
         }
+    }
+
+    private String getMediaType(int id) throws SQLException{
+        String sql = "SELECT type FROM media WHERE id = ?";
+        try(PreparedStatement pstmt = connection.prepareStatement(sql)){
+            pstmt.setInt(1, id);
+            try (ResultSet rs = pstmt.executeQuery()){
+                if(rs.next()){
+                    return rs.getString("type");
+                }
+            }
+        }
+        throw new SQLException("Медиа с id " + id + " не найдено");
     }
 
     public void updateMedia(Media media){
@@ -205,8 +271,8 @@ public class SQLiteManager {
         return film;
     }
 
-    public List<Media> searchByName(String searchTerm) throws SQLException{
-        List<Media> result = new ArrayList<>();
+    public ArrayList<Media> searchByName(String searchTerm) throws SQLException{
+        ArrayList<Media> result = new ArrayList<>();
         String sql = "SELECT m.id, m.type, m.name, m.genres, m.pub_year, m.rating," +
                 "b.author, b.publisher, b.pages," +
                 "f.creators, f.duration " +
@@ -216,13 +282,15 @@ public class SQLiteManager {
                 "WHERE m.name LIKE ? OR " +
                 "m.genres LIKE ? OR " +
                 "b.author LIKE ? OR " +
-                "f.creators LIKE ?";
+                "f.creators LIKE ? OR " +
+                "m.type LIKE ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, searchTerm);
             pstmt.setString(2, searchTerm);
             pstmt.setString(3, searchTerm);
             pstmt.setString(4, searchTerm);
+            pstmt.setString(5, searchTerm);
 
             try (ResultSet rs = pstmt.executeQuery()){
                 while(rs.next()){
@@ -292,9 +360,5 @@ public class SQLiteManager {
             stmt.execute(enableFK);
         }
         System.out.println("Таблицы успешно очищены.");
-    }
-
-    public void close() throws SQLException{
-        if(connection != null) connection.close();
     }
 }

@@ -1,71 +1,10 @@
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 
 public class MediaManager {
-    private final ObjectMapper mapper;
-    private ArrayList<Media> mediaList;
+   public MediaManager(){}
+
     static SQLiteManager sqlite = new SQLiteManager("media.db");
-
-    public MediaManager(ObjectMapper mapper, ArrayList<Media> mediaList){
-        this.mapper = mapper;
-        this.mediaList = mediaList;
-    }
-
-    public void readFromFile(int choice) throws IOException, SQLException {
-        Scanner scanner = new Scanner(System.in);
-        List<Media> parsedList = mapper.readValue(
-                new File("media_library.json"),
-                mapper.getTypeFactory().constructCollectionType(List.class, Media.class)
-        );
-
-        System.out.println("Прочитанный JSON: " + mapper.writeValueAsString(parsedList));
-        while(choice < 1 || choice > 3) {
-            System.out.println("Хотите ли вы сделать что-либо с этими данными?" +
-                    "\n1 - Заменить содержимое списка данными" +
-                    "\n2 - Добавить данные в список" +
-                    "\n3 - Нет");
-            choice = scanner.nextInt();
-            if(choice == 1){
-                mediaList.clear();
-                for(Media media : parsedList) mediaList.add(media);
-                System.out.println("Данные заменены");
-            } else if(choice == 2){
-                int addedCount = 0;
-
-                for (Media newMedia : parsedList) {
-                    if (!mediaList.contains(newMedia)) {
-                        newMedia.setId(mediaList.size());
-                        mediaList.add(newMedia);
-                        sqlite.addMedia(newMedia);
-                        addedCount++;
-                    }
-                }
-
-                System.out.println("Добавлено новых объектов: " + addedCount);
-            } else if(choice == 3) break;
-            else System.out.println("Такой опции нет!");
-        }
-
-    }
-
-    public void writeInFile() throws IOException{
-        ArrayNode jsonArray = mapper.valueToTree(mediaList);
-
-        for (JsonNode node : jsonArray) {
-            ObjectNode mediaNode = (ObjectNode) node;
-            mediaNode.put("mediaType", mediaNode.get("type").asText());
-        }
-
-        mapper.writeValue(new File("media_library.json"), jsonArray);
-        System.out.println("Данные успешно записаны!");
-    }
 
     public static boolean doesMediaExist(ArrayList<Media> mediaList, String type){
         int mediaCount = 0;
@@ -128,7 +67,7 @@ public class MediaManager {
     }
 
     public static void addMedia(ArrayList<Media> mediaList, String type) throws SQLException{
-        int id = mediaList.size();
+        int id = mediaList.size()+1;
         Scanner scanner = new Scanner(System.in);
         System.out.println("Введите название: ");
         String name = scanner.nextLine().trim();
@@ -187,7 +126,8 @@ public class MediaManager {
                 "\n6 - Издатель" +
                 "\n7 - Кол-во страниц");
         else if (type.equals("Фильм")) {
-            System.out.println("5 - Создатели" + "\n6 - Продолжительность фильма");
+            System.out.println("5 - Создатели" +
+                    "\n6 - Продолжительность фильма");
         }
         int opt = scanner.nextInt();
         int id = -1;

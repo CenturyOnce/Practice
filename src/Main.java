@@ -15,7 +15,7 @@ public class Main {
                 "\n2 - Добавить книгу/фильм" +
                 "\n3 - Изменить информацию о книге/фильме" +
                 "\n4 - Удалить книгу/фильм" +
-                "\n5 - Обновить файл JSON" +
+                "\n5 - Обновить файл media_library.json" +
                 "\n6 - Считать информацию с файла" +
                 "\n7 - Выход" +
                 "\n8 - Очистить таблицы" +
@@ -36,8 +36,6 @@ public class Main {
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         Scanner scanner = new Scanner(System.in);
 
-        SQLiteManager sqlLite = new SQLiteManager("media.db");
-
         ArrayList<Media> mediaList = new ArrayList<>();
         mediaList.add(new Book(mediaList.size()+1, "Мистик", "Фрэнк Оувэл", new HashSet<>(Set.of("Детектив", "Мистика", "Комедия")),
                 2016, "Букинист", 235, 4.5));
@@ -46,10 +44,14 @@ public class Main {
         mediaList.add(new Film(mediaList.size()+1, "На другой стороне", new HashSet<>(Set.of("Приключения", "Хоррор", "Экшен")),
                 2021, new ArrayList<>(Arrays.asList("Кристи Голд", "Майкл Ковак")),210, 3.7));
         int option = -1;
+
         while(option != 7) {
+            String fileName = "";
             int choice = -1;
             showMenu();
-            MediaManager manager = new MediaManager(mapper, mediaList);
+            SQLiteManager sqlLite = new SQLiteManager("media.db");
+            FileManager fileManager = new FileManager(mapper, mediaList);
+            List <String> fileList = fileManager.findJsonFiles("C:\\Users\\ylubavina\\Documents\\GitHub\\PracticeNew");
 
             option = scanner.nextInt();
             switch (option){
@@ -58,23 +60,23 @@ public class Main {
                     pauseProgram();
                     break;
                 case 1:
-                    choice = manager.mediaChoice(choice);
-                    if(choice == 1) manager.getAllMediaType(mediaList, Book.TYPE);
-                    else if(choice == 2) manager.getAllMediaType(mediaList, Film.TYPE);
+                    choice = MediaManager.mediaChoice(choice);
+                    if(choice == 1) MediaManager.getAllMediaType(mediaList, Book.TYPE);
+                    else if(choice == 2) MediaManager.getAllMediaType(mediaList, Film.TYPE);
                     pauseProgram();
                     break;
                 case 2:
-                    choice = manager.mediaChoice(choice);
-                    if(choice == 1) manager.addMedia(mediaList, Book.TYPE);
-                    else if(choice == 2) manager.addMedia(mediaList, Film.TYPE);
+                    choice = MediaManager.mediaChoice(choice);
+                    if(choice == 1) MediaManager.addMedia(mediaList, Book.TYPE);
+                    else if(choice == 2) MediaManager.addMedia(mediaList, Film.TYPE);
                     break;
                 case 3:
-                    choice = manager.mediaChoice(choice);
-                    if(choice == 1) manager.changeMediaMenu(mediaList, Book.TYPE);
-                    else if(choice == 2) manager.changeMediaMenu(mediaList, Film.TYPE);
+                    choice = MediaManager.mediaChoice(choice);
+                    if(choice == 1) MediaManager.changeMediaMenu(mediaList, Book.TYPE);
+                    else if(choice == 2) MediaManager.changeMediaMenu(mediaList, Film.TYPE);
                     break;
                 case 4:
-                    choice = manager.mediaChoice(choice);
+                    choice = MediaManager.mediaChoice(choice);
                     if(choice == 1) MediaManager.deleteMedia(mediaList, Book.TYPE);
                     else if(choice == 2) MediaManager.deleteMedia(mediaList, Film.TYPE);
                     break;
@@ -84,12 +86,19 @@ public class Main {
                                 "\n1 - Да" +
                                 "\n2 - Нет");
                         choice = scanner.nextInt();
-                        if(choice == 1) manager.writeInFile();
+                        if(choice == 1) fileManager.writeInFile("media_library", mediaList);
                         else if(choice == 2) break;
                     }
                     break;
                 case 6:
-                    manager.readFromFile(choice);
+                    while(choice < 1 || choice > fileList.size()+1){
+                        System.out.println("У какого файла вы хотите считать информацию?");
+                        for(int i = 0; i < fileList.size(); i++){
+                            System.out.println((i+1) + " - " + fileList.get(i));
+                        }
+                        choice = scanner.nextInt();
+                    }
+                    fileManager.readFromFile(fileList.get(choice-1));
                     break;
                 case 7:
                     System.exit(0);
@@ -120,9 +129,24 @@ public class Main {
                     System.out.println("Введите какой-либо термин, по которому можно найти объекты в таблице: ");
                     scanner.nextLine();
                     String searchTerm = "%" + scanner.nextLine().trim() + "%";
-                    List<Media> sqlSearchList = sqlLite.searchByName(searchTerm);
-                    if(sqlSearchList.size() == 0) System.out.println("Совпадений нет.");
-                    else for (Media media : sqlSearchList) media.getInfo();
+                    ArrayList<Media> sqlSearchList = sqlLite.searchByName(searchTerm);
+                    if(sqlSearchList.isEmpty()) System.out.println("Совпадений нет.");
+                    else{
+                        for (Media media : sqlSearchList) media.getInfo();
+                        while(choice < 1 || choice > 2){
+                            System.out.println("Что вы желаете сделать с найденными данными?" +
+                                    "\n1 - Записать данные в файл" +
+                                    "\n2 - Ничего");
+                            choice = scanner.nextInt();
+                        }
+                        if(choice == 1){
+                            System.out.println("Введите название нового файла(без '.json'): ");
+                            scanner.nextLine();
+                            fileName = scanner.nextLine() + ".json";
+                            if(!fileList.contains(fileName)) fileList.add(fileName);
+                            fileManager.writeInFile(fileName, sqlSearchList);
+                        }
+                    }
                     pauseProgram();
                     break;
                 default:
