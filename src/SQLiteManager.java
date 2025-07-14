@@ -60,10 +60,11 @@ public class SQLiteManager {
             }
         }
     }
+
     private boolean identicalMediaExists(Media media) throws SQLException{
         String sql = "SELECT 1 FROM media WHERE " +
                 "id = ? AND " +
-                "type = ? AND" +
+                "type = ? AND " +
                 "name = ? AND " +
                 "genres = ? AND " +
                 "pub_year = ? AND " +
@@ -82,9 +83,43 @@ public class SQLiteManager {
             }
         }
 
-        //if(media instanceof Book) return identicalBookExists((Book) media);
-        //else if(media instanceof Film) return  identicalFilmExists((Film) media);
+        if(media instanceof Book) return identicalBookExists((Book) media);
+        else if(media instanceof Film) return  identicalFilmExists((Film) media);
         return false;
+    }
+    private boolean identicalBookExists(Book book) throws SQLException {
+        String sql = "SELECT 1 FROM books WHERE " +
+                "media_id IN (SELECT id FROM media WHERE name = ? AND type = 'BOOK') AND " +
+                "author = ? AND " +
+                "publisher = ? AND " +
+                "pages = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, book.getName());
+            pstmt.setString(2, book.getAuthor());
+            pstmt.setString(3, book.getPublisher());
+            pstmt.setInt(4, book.getPages());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+    private boolean identicalFilmExists(Film film) throws SQLException {
+        String sql = "SELECT 1 FROM films WHERE " +
+                "media_id IN (SELECT id FROM media WHERE name = ? AND type = 'FILM') AND " +
+                "creators = ? AND " +
+                "duration = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, film.getName());
+            pstmt.setString(2, String.join(", " ,film.getCreators()));
+            pstmt.setInt(3, film.getDuration());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
     }
 
     public void addMedia(Media media) throws SQLException{
@@ -92,7 +127,7 @@ public class SQLiteManager {
             String currType = getMediaType(media.getId());
             if(currType.equals(media.getType())){
                 updateMedia(media);
-                changed += 1;
+                if(identicalMediaExists(media)) changed += 1;
                 return;
             } else System.err.println("Объекты совпадают по ID, но их типы разные");
         }

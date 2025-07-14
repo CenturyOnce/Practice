@@ -51,8 +51,9 @@ public class Main {
             showMenu();
             SQLiteManager sqlLite = new SQLiteManager("media.db");
             FileManager fileManager = new FileManager(mapper, mediaList);
-            List <String> fileList = fileManager.findJsonFiles("C:\\Users\\ylubavina\\Documents\\GitHub\\PracticeNew");
-
+            List <String> fileList = fileManager.findJsonFiles("C:\\Users\\Yana\\Documents\\GitHub\\Practice");
+            //C:\\Users\\Yana\\Documents\\GitHub\\Practice
+            //C:\\Users\\ylubavina\\Documents\\GitHub\\PracticeNew
             option = scanner.nextInt();
             switch (option){
                 case 0:
