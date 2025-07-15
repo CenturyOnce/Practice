@@ -225,7 +225,7 @@ public class SQLiteManager {
         }
     }
     private void updateFilm(Film film) throws SQLException{
-        String sql = "UPDATE books SET creators=?, duration=? WHERE media_id=?";
+        String sql = "UPDATE films SET creators=?, duration=? WHERE media_id=?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, String.join(", ", film.getCreators()));
