@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
-        property = "mediaType"  // поле в JSON, по которому определяется тип
+        property = "mediaType"
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = Film.class, name = "Фильм"),
@@ -69,6 +69,9 @@ abstract class Media {
 
     public double getRating() { return rating; }
     public void setRating(double rating) { this.rating = rating; }
+
+    public String getPublisher(){ return ""; }
+    public void setPublisher(String publisher){}
 
     public void changeGenres() {
         Scanner scanner = new Scanner(System.in);

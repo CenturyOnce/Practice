@@ -41,7 +41,9 @@ class Book extends Media {
         this.pages = pages;
     }
 
+    @Override
     public String getPublisher(){ return publisher; }
+    @Override
     public void setPublisher(String publisher){
         this.publisher = publisher;
     }

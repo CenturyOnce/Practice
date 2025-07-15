@@ -34,10 +34,11 @@ public class MediaManager {
     }
     public static int mediaChoice(int choice){
         Scanner scanner = new Scanner(System.in);
-        while(choice < 0 || choice >2){
+        while(choice < 0 || choice > 3){
             System.out.println("С чем вы хотите выполнить действие?" +
                     "\n1 - Книга" +
-                    "\n2 - Фильм");
+                    "\n2 - Фильм" +
+                    "\n3 - Игра");
             choice = scanner.nextInt();
         }
         return choice;
@@ -85,7 +86,7 @@ public class MediaManager {
         System.out.println("Введите среднюю оценку: ");
         double rating = scanner.nextDouble();
         scanner.nextLine();
-        if(type.equals("Книга")){
+        if(type.equals(Book.TYPE)){
             System.out.println("Введите издателя: ");
             String publisher = scanner.nextLine().trim();
             System.out.println("Введите кол-во страниц: ");
@@ -96,7 +97,7 @@ public class MediaManager {
             Book book = new Book(id, name, author, genres, pubYear, publisher, amountOfPages, rating);
             mediaList.add(book);
             sqlite.addMedia(book);
-        } else if(type.equals("Фильм")) {
+        } else if(type.equals(Film.TYPE)) {
             System.out.println("Введите кол-во создателей: ");
             int creatorsNum = scanner.nextInt();
             scanner.nextLine();
@@ -111,6 +112,32 @@ public class MediaManager {
             Film film = new Film(id, name, genres, pubYear, creators, durationMinutes, rating);
             mediaList.add(film);
             sqlite.addMedia(film);
+        } else if(type.equals(Game.TYPE)){
+            System.out.println("Введите разработчика: ");
+            String developer = scanner.nextLine().trim();
+            System.out.println("Введите издателя: ");
+            String publisher = scanner.nextLine().trim();
+            System.out.println("Введите кол-во платформ: ");
+            int platAmount = scanner.nextInt();
+            scanner.nextLine();
+            System.out.println("Введите платформы(" + platAmount + ", каждая через Enter): ");
+            Set<String> platforms = new HashSet<>();
+            for(int i = 0; i< platAmount; i++){
+                String platform = scanner.nextLine();
+                platforms.add(platform);
+            }
+            System.out.println("Введите кол-во поддерживаемых языков: ");
+            int langAmount = scanner.nextInt();
+            scanner.nextLine();
+            System.out.println("Введите поддерживаемые языки(" + langAmount + ", каждый через Enter)");
+            Set<String> supLanguages = new HashSet<>();
+            for(int i = 0; i< platAmount; i++){
+                String language = scanner.nextLine();
+                supLanguages.add(language);
+            }
+            Game game = new Game(id, name, genres, pubYear, developer, publisher, platforms, supLanguages, rating);
+            mediaList.add(game);
+            sqlite.addMedia(game);
         }
     }
 
@@ -122,12 +149,17 @@ public class MediaManager {
                 "\n2 - Жанры" +
                 "\n3 - Год выхода" +
                 "\n4 - Средняя оценка");
-        if(type.equals("Книга")) System.out.println("5 - Автор" +
+        if(type.equals(Book.TYPE)) System.out.println("5 - Автор" +
                 "\n6 - Издатель" +
                 "\n7 - Кол-во страниц");
-        else if (type.equals("Фильм")) {
+        else if (type.equals(Film.TYPE)) {
             System.out.println("5 - Создатели" +
                     "\n6 - Продолжительность фильма");
+        } else if(type.equals(Game.TYPE)){
+            System.out.println("5 - Разработчик" +
+                    "\n6 - Издатель" +
+                    "\n7 - Платформы" +
+                    "\n8 - Языки");
         }
         int opt = scanner.nextInt();
         int id = -1;
@@ -172,7 +204,7 @@ public class MediaManager {
             System.out.println("Введите новую среднюю оценку: ");
             double newRating = scanner.nextDouble();
             mediaList.get(id-1).setRating(newRating);
-        } else if(opt == 5 && type.equals("Фильм")){
+        } else if(opt == 5 && type.equals(Film.TYPE)){
             while(id < 0 || id > mediaList.size()){
                 System.out.println("Создателей какго фильма вы хотите изменить?");
                 for(Media media : mediaList) {
@@ -183,7 +215,7 @@ public class MediaManager {
             }
             final Media currentMedia = mediaList.get(id-1);
             ((Film) currentMedia).changeCreators();
-        } else if(opt == 6 && type.equals("Фильм")){
+        } else if(opt == 6 && type.equals(Film.TYPE)){
             while(id < 0 || id > mediaList.size()){
                 System.out.println("Продолжительность какго фильма вы хотите изменить?");
                 for(Media media : mediaList) {
@@ -196,7 +228,7 @@ public class MediaManager {
             int minutes = scanner.nextInt();
             final Media currentMedia = mediaList.get(id-1);
             ((Film) currentMedia).setDuration(minutes);
-        } else if(opt == 5 && type.equals("Книга")){
+        } else if(opt == 5 && type.equals(Book.TYPE)){
             while(id < 0 || id > mediaList.size()){
                 System.out.println("Автора какой книги вы хотите изменить?");
                 for(Media media : mediaList) {
@@ -210,12 +242,25 @@ public class MediaManager {
             String newAuthor = scanner.nextLine().trim();
             final Media currentMedia = mediaList.get(id-1);
             ((Book) currentMedia).setAuthor(newAuthor);
-        } else if(opt == 6 && type.equals("Книга")){
+        } else if(opt == 5 && type.equals(Game.TYPE)){
             while(id < 0 || id > mediaList.size()){
-                System.out.println("Издателя какой книги вы хотите изменить?");
+                System.out.println("разработчика какой игры вы хотиет изменить?");
+                for(Media media : mediaList){
+                    if(media.getType().equals(Game.TYPE)) System.out.println(media.getId() + " - " + media.getName() + " - " +
+                            ((Game) media).getDeveloper());
+                }
+                id = idCheck(mediaList, type);
+            }
+            System.out.println("Введите нового разработчика: ");
+            String newDeveloper = scanner.nextLine().trim();
+            final Media currentMedia = mediaList.get(id-1);
+            ((Game) currentMedia).setDeveloper(newDeveloper);
+        } else if(opt == 6 && (type.equals(Book.TYPE) || type.equals(Game.TYPE))){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Издателя какго объекта вы хотите изменить?");
                 for(Media media : mediaList) {
-                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName()
-                            + " - " + ((Book) media).getPublisher());
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getType() + " - "
+                            + media.getName() + " - " + media.getPublisher());
                 }
                 id = idCheck(mediaList, type);
             }
@@ -223,9 +268,9 @@ public class MediaManager {
             scanner.nextLine();
             String newPublisher = scanner.nextLine().trim();
             final Media currentMedia = mediaList.get(id-1);
-            ((Book) currentMedia).setPublisher(newPublisher);
+            currentMedia.setPublisher(newPublisher);
 
-        } else if(opt == 7 && type.equals("Книга")){
+        } else if(opt == 7 && type.equals(Book.TYPE)){
             while(id < 0 || id > mediaList.size()){
                 System.out.println("Кол-во страниц какой книги вы хотите изменить?");
                 for(Media media : mediaList) {
@@ -238,6 +283,28 @@ public class MediaManager {
             int pages = scanner.nextInt();
             final Media currentMedia = mediaList.get(id-1);
             ((Book) currentMedia).setPages(pages);
+        } else if(opt == 7 && type.equals(Game.TYPE)){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Платформы какой игры вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName() +
+                            " - " + ((Game) media).getPlatforms());
+                }
+                id = idCheck(mediaList, type);
+            }
+            final Media currentMedia = mediaList.get(id-1);
+            ((Game) currentMedia).changePlatforms();
+        } else if(opt == 8 && type.equals(Game.TYPE)){
+            while(id < 0 || id > mediaList.size()){
+                System.out.println("Языки какой игры вы хотите изменить?");
+                for(Media media : mediaList) {
+                    if(media.getType().equals(type)) System.out.println(media.getId() + " - " + media.getName() +
+                            " - " + ((Game) media).getSupLanguages());
+                }
+                id = idCheck(mediaList, type);
+            }
+            final Media currentMedia = mediaList.get(id-1);
+            ((Game) currentMedia).changeSupLanguages();
         }
         else{
             System.out.println("Такой опции нет!");

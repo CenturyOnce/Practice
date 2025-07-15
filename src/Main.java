@@ -43,6 +43,9 @@ public class Main {
                 2019, new ArrayList<>(Arrays.asList("Нэйтан Блэк", "Брайс Папенбрук")),153, 4.2));
         mediaList.add(new Film(mediaList.size()+1, "На другой стороне", new HashSet<>(Set.of("Приключения", "Хоррор", "Экшен")),
                 2021, new ArrayList<>(Arrays.asList("Кристи Голд", "Майкл Ковак")),210, 3.7));
+        mediaList.add(new Game(mediaList.size()+1, "Deltarune", new HashSet<>(Set.of("Головоломка", "Комедия", "РПГ", "Одиночная")), 2018, "Toby Fox",
+                "Toby Fox", new HashSet<>(Set.of("Windows", "macOS", "Nintendo Switch", "PS4", "Nintendo Switch 2")), new HashSet<>(Set.of("English",
+                "Japanese")), 4.9));
         int option = -1;
 
         while(option != 7) {
@@ -51,7 +54,7 @@ public class Main {
             showMenu();
             SQLiteManager sqlLite = new SQLiteManager("media.db");
             FileManager fileManager = new FileManager(mapper, mediaList);
-            List <String> fileList = fileManager.findJsonFiles("C:\\Users\\Yana\\Documents\\GitHub\\Practice");
+            List <String> fileList = fileManager.findJsonFiles("\\Users\\ylubavina\\Documents\\GitHub\\PracticeNew");
             //C:\\Users\\Yana\\Documents\\GitHub\\Practice
             //C:\\Users\\ylubavina\\Documents\\GitHub\\PracticeNew
             option = scanner.nextInt();
@@ -64,22 +67,26 @@ public class Main {
                     choice = MediaManager.mediaChoice(choice);
                     if(choice == 1) MediaManager.getAllMediaType(mediaList, Book.TYPE);
                     else if(choice == 2) MediaManager.getAllMediaType(mediaList, Film.TYPE);
+                    else if(choice == 3) MediaManager.getAllMediaType(mediaList, Game.TYPE);
                     pauseProgram();
                     break;
                 case 2:
                     choice = MediaManager.mediaChoice(choice);
                     if(choice == 1) MediaManager.addMedia(mediaList, Book.TYPE);
                     else if(choice == 2) MediaManager.addMedia(mediaList, Film.TYPE);
+                    else if(choice == 3) MediaManager.addMedia(mediaList, Game.TYPE);
                     break;
                 case 3:
                     choice = MediaManager.mediaChoice(choice);
                     if(choice == 1) MediaManager.changeMediaMenu(mediaList, Book.TYPE);
                     else if(choice == 2) MediaManager.changeMediaMenu(mediaList, Film.TYPE);
+                    else if(choice == 3) MediaManager.changeMediaMenu(mediaList, Game.TYPE);
                     break;
                 case 4:
                     choice = MediaManager.mediaChoice(choice);
                     if(choice == 1) MediaManager.deleteMedia(mediaList, Book.TYPE);
                     else if(choice == 2) MediaManager.deleteMedia(mediaList, Film.TYPE);
+                    else if(choice == 3) MediaManager.deleteMedia(mediaList, Game.TYPE);
                     break;
                 case 5:
                     while(choice < 0 || choice > 2){

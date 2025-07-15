@@ -41,11 +41,19 @@ public class SQLiteManager {
                 "creators TEXT NOT NULL," +
                 "duration INTEGER," +
                 "FOREIGN KEY(media_id) REFERENCES media(id))";
+        String gamesql = "CREATE TABLE IF NOT EXISTS games (" +
+                "media_id INTEGER PRIMARY KEY," +
+                "developer TEXT NOT NULL," +
+                "publisher TEXt NOT NULL," +
+                "platforms TEXT NOT NULL," +
+                "supLanguages TEXT NOT NULL," +
+                "FOREIGN KEY(media_id) REFERENCES media(id))";
 
         try (Statement stmt = connection.createStatement()){
             stmt.execute(mediaSql);
             stmt.execute(bookSql);
             stmt.execute(filmSql);
+            stmt.execute(gamesql);
         } catch (SQLException e){
             System.out.println(e.getMessage());
         }
@@ -85,6 +93,7 @@ public class SQLiteManager {
 
         if(media instanceof Book) return identicalBookExists((Book) media);
         else if(media instanceof Film) return  identicalFilmExists((Film) media);
+        else if(media instanceof Game) return  identicalGameExists((Game) media);
         return false;
     }
     private boolean identicalBookExists(Book book) throws SQLException {
@@ -121,6 +130,27 @@ public class SQLiteManager {
             }
         }
     }
+    private boolean identicalGameExists(Game game) throws SQLException {
+        String sql = "SELECT 1 FROM films WHERE " +
+                "media_id IN (SELECT id FROM media WHERE name = ? AND type = 'FILM') AND " +
+                "developer = ? AND " +
+                "publisher = ? AND " +
+                "platforms = ? AND " +
+                "supLanguages = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, game.getName());
+            pstmt.setString(2, game.getDeveloper());
+            pstmt.setString(3, game.getPublisher());
+            pstmt.setString(4, String.join(", " ,game.getPlatforms()));
+            pstmt.setString(5, String.join(", " ,game.getSupLanguages()));
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
 
     public void addMedia(Media media) throws SQLException{
         if(media.getId() > 0 && mediaExistsById(media.getId())){
@@ -151,6 +181,8 @@ public class SQLiteManager {
                         addBook((Book) media, mediaId);
                     } else if(media.getType().equals(Film.TYPE)){
                         addFilm((Film) media, mediaId);
+                    } else if(media.getType().equals(Game.TYPE)){
+                        addGame((Game) media, mediaId);
                     }
                     addedNew += 1;
                 }
@@ -175,6 +207,17 @@ public class SQLiteManager {
             pstmt.setInt(1, mediaId);
             pstmt.setString(2, String.join(", ", film.getCreators()));
             pstmt.setInt(3, film.getDuration());
+            pstmt.executeUpdate();
+        }
+    }
+    private void addGame(Game game, int mediaId) throws SQLException{
+        String sql = "INSERT INTO games(media_id, developer, publisher, platforms, supLanguages) VALUES(?,?,?,?,?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)){
+            pstmt.setInt(1, mediaId);
+            pstmt.setString(2, game.getDeveloper());
+            pstmt.setString(3, game.getPublisher());
+            pstmt.setString(4, String.join(", ", game.getPlatforms()));
+            pstmt.setString(5, String.join(", ", game.getSupLanguages()));
             pstmt.executeUpdate();
         }
     }
@@ -207,6 +250,8 @@ public class SQLiteManager {
                 updateBook((Book) media);
             } else if(media instanceof Film){
                 updateFilm((Film) media);
+            } else if(media instanceof Game){
+                updateGame((Game) media);
             }
         }catch (SQLException e){
             System.out.println(e.getMessage());
@@ -234,15 +279,29 @@ public class SQLiteManager {
             pstmt.executeUpdate();
         }
     }
+    private void updateGame(Game game) throws SQLException{
+        String sql = "UPDATE films SET developer=?, publisher=?, platforms=?, supLanguages=? WHERE media_id=?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)){
+            pstmt.setString(1, game.getDeveloper());
+            pstmt.setString(2, game.getPublisher());
+            pstmt.setString(3, String.join(", ", game.getPlatforms()));
+            pstmt.setString(4, String.join(", ", game.getSupLanguages()));
+            pstmt.setInt(5, game.getId());
+            pstmt.executeUpdate();
+        }
+    }
 
     public List<Media> getAllMedia() throws SQLException{
         List<Media> result = new ArrayList<>();
         String sql = "SELECT m.id, m.type, m.name, m.genres, m.pub_year, m.rating," +
                 "b.author, b.publisher, b.pages," +
-                "f.creators, f.duration " +
+                "f.creators, f.duration, " +
+                "g.developer, g.publisher, g.platforms, g.supLanguages " +
                 "FROM media m " +
                 "LEFT JOIN books b ON m.id=b.media_id " +
-                "LEFT JOIN films f ON m.id=f.media_id";
+                "LEFT JOIN films f ON m.id=f.media_id " +
+                "LEFT JOIN games g ON m.id=g.media_id";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql);
             ResultSet rs = pstmt.executeQuery()){
@@ -253,8 +312,10 @@ public class SQLiteManager {
 
                 if(Book.TYPE.equals(type)){
                     media = getBookFromRS(rs);
-                } else {
+                } else if(Film.TYPE.equals(type)){
                     media = getFilmFromRS(rs);
+                } else {
+                    media = getGameFromRS(rs);
                 }
                 result.add(media);
             }
@@ -305,20 +366,55 @@ public class SQLiteManager {
         film.setId(rs.getInt("id"));
         return film;
     }
+    private Game getGameFromRS(ResultSet rs) throws SQLException{
+        String genresStr = rs.getString("genres");
+        Set<String> genres = new HashSet<>();
+        if(genresStr!=null && !genresStr.isEmpty()){
+            genres = new HashSet<>(Arrays.asList(genresStr.split(", ")));
+        }
+        String platformsStr = rs.getString("platforms");
+        Set<String> platforms = new HashSet<>();
+        if(platformsStr!=null && !platformsStr.isEmpty()){
+            platforms = new HashSet<>(Arrays.asList(platformsStr.split(", ")));
+        }
+        String supLanguagesStr = rs.getString("genres");
+        Set<String> supLanguages = new HashSet<>();
+        if(supLanguagesStr!=null && !supLanguagesStr.isEmpty()){
+            supLanguages = new HashSet<>(Arrays.asList(supLanguagesStr.split(", ")));
+        }
+        Game game = new Game(
+                rs.getInt("id"),
+                rs.getString("name"),
+                genres,
+                rs.getInt("pub_year"),
+                rs.getString("developer"),
+                rs.getString("publisher"),
+                platforms,
+                supLanguages,
+                rs.getDouble("rating")
+        );
+        game.setId(rs.getInt("id"));
+        return game;
+    }
 
     public ArrayList<Media> searchByName(String searchTerm) throws SQLException{
         ArrayList<Media> result = new ArrayList<>();
         String sql = "SELECT m.id, m.type, m.name, m.genres, m.pub_year, m.rating," +
                 "b.author, b.publisher, b.pages," +
-                "f.creators, f.duration " +
+                "f.creators, f.duration," +
+                "g.developer, g.publisher, g.platforms, g.supLanguages " +
                 "FROM media m " +
                 "LEFT JOIN books b ON m.id=b.media_id " +
                 "LEFT JOIN films f ON m.id=f.media_id " +
+                "LEFT JOIN games g ON m.id=g.media_id " +
                 "WHERE m.name LIKE ? OR " +
                 "m.genres LIKE ? OR " +
                 "b.author LIKE ? OR " +
                 "f.creators LIKE ? OR " +
-                "m.type LIKE ?";
+                "m.type LIKE ? OR " +
+                "g.developer LIKE ? OR " +
+                "b.publisher LIKE ? OR " +
+                "g.publisher LIKE ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)){
             pstmt.setString(1, searchTerm);
@@ -326,6 +422,9 @@ public class SQLiteManager {
             pstmt.setString(3, searchTerm);
             pstmt.setString(4, searchTerm);
             pstmt.setString(5, searchTerm);
+            pstmt.setString(6, searchTerm);
+            pstmt.setString(7, searchTerm);
+            pstmt.setString(8, searchTerm);
 
             try (ResultSet rs = pstmt.executeQuery()){
                 while(rs.next()){
@@ -337,6 +436,8 @@ public class SQLiteManager {
                             media = getBookFromRS(rs);
                         } else if(Film.TYPE.equals(type)){
                             media = getFilmFromRS(rs);
+                        } else if(Game.TYPE.equals(type)){
+                            media = getGameFromRS(rs);
                         }
                     }
 
@@ -358,9 +459,11 @@ public class SQLiteManager {
             try(ResultSet rs = pstmt.executeQuery()){
                 if(rs.next()){
                     type = rs. getString("type");
-
-                    String childSQL = "DELETE FROM " + (Book.TYPE.equals(type)?"books":"films") +
-                            " WHERE media_id=?";
+                    String table;
+                    if(Book.TYPE.equals(type)) table = "books";
+                    else if(Film.TYPE.equals(type)) table = "films";
+                    else table = "games";
+                    String childSQL = "DELETE FROM " + table + " WHERE media_id=?";
                     try (PreparedStatement childPstmt = connection.prepareStatement(childSQL)){
                         childPstmt.setInt(1, id);
                         childPstmt.executeUpdate();
@@ -385,6 +488,7 @@ public class SQLiteManager {
 
             stmt.execute("DELETE FROM books");
             stmt.execute("DELETE FROM films");
+            stmt.execute("DELETE FROM games");
             stmt.execute("DELETE FROM media");
 
             ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='sqlite_sequence'");
